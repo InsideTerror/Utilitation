@@ -14,6 +14,7 @@ COGS = [
     "cogs.military_resources",
     "cogs.military_documents",
     "cogs.personnel_db"
+    "cogs.help_cog"
 ]
 
 @bot.event
