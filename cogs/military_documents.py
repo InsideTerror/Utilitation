@@ -1,68 +1,56 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
-import os
-from datetime import datetime
-from utils.permissions import is_authorized
-
-DATA_PATH = "data/documents.json"
-DOCUMENT_TYPES = ["Order", "Report", "Fine", "Transfer", "Disciplinary"]
-
-def load_documents():
-    if not os.path.exists(DATA_PATH):
-        return []
-    with open(DATA_PATH, "r") as f:
-        return json.load(f)
-
-def save_documents(docs):
-    with open(DATA_PATH, "w") as f:
-        json.dump(docs, f, indent=4)
+from utils.permissions import is_authorized_prefix, is_authorized_slash
 
 class MilitaryDocuments(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.documents = load_documents()
+        self.documents = {}  # {title: content}
 
-    def save(self):
-        save_documents(self.documents)
+    @commands.command(name="create_document")
+    @is_authorized_prefix()
+    async def create_document_cmd(self, ctx, title: str, *, content: str):
+        self.documents[title] = content
+        await ctx.send(f"Document '{title}' created.")
 
-    @app_commands.command(name="document_issue", description="Issue a military document (order, report, fine, etc.)")
-    async def issue_document(
-        self,
-        interaction: discord.Interaction,
-        doc_type: str,
-        title: str,
-        summary: str,
-        target_unit: str = "N/A"
-    ):
-        if not await is_authorized(interaction.user, ["Commander", "Officer"]):
-            await interaction.response.send_message("You are not authorized to issue documents.", ephemeral=True)
+    @app_commands.command(name="createdocument", description="Create a military document")
+    async def create_document_slash(self, interaction: discord.Interaction, title: str, content: str):
+        if not await is_authorized_prefix(interaction.user):
+            await interaction.response.send_message("You are not authorized.", ephemeral=True)
             return
+        self.documents[title] = content
+        await interaction.response.send_message(f"Document '{title}' created.")
 
-        doc_type = doc_type.capitalize()
-        if doc_type not in DOCUMENT_TYPES:
-            await interaction.response.send_message(f"Invalid document type. Must be one of: {', '.join(DOCUMENT_TYPES)}", ephemeral=True)
-            return
+    @commands.command(name="view_document")
+    async def view_document_cmd(self, ctx, title: str):
+        content = self.documents.get(title)
+        if content:
+            await ctx.send(f"**{title}**\n{content}")
+        else:
+            await ctx.send("Document not found.")
 
-        document = {
-            "type": doc_type,
-            "title": title,
-            "summary": summary,
-            "target_unit": target_unit,
-            "issued_by": interaction.user.name,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        self.documents.append(document)
-        self.save()
+    @app_commands.command(name="viewdocument", description="View a military document")
+    async def view_document_slash(self, interaction: discord.Interaction, title: str):
+        content = self.documents.get(title)
+        if content:
+            await interaction.response.send_message(f"**{title}**\n{content}")
+        else:
+            await interaction.response.send_message("Document not found.", ephemeral=True)
 
-        embed = discord.Embed(title=f"{doc_type} - {title}", color=discord.Color.orange())
-        embed.add_field(name="Summary", value=summary, inline=False)
-        embed.add_field(name="Target Unit", value=target_unit, inline=True)
-        embed.add_field(name="Issued By", value=interaction.user.name, inline=True)
-        embed.set_footer(text=f"Issued on {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+    @commands.command(name="list_documents")
+    async def list_documents_cmd(self, ctx):
+        if not self.documents:
+            await ctx.send("No documents.")
+        else:
+            await ctx.send("Documents:\n" + "\n".join(self.documents.keys()))
 
-        await interaction.response.send_message(embed=embed)
+    @app_commands.command(name="listdocuments", description="List all military documents")
+    async def list_documents_slash(self, interaction: discord.Interaction):
+        if not self.documents:
+            await interaction.response.send_message("No documents.")
+        else:
+            await interaction.response.send_message("Documents:\n" + "\n".join(self.documents.keys()))
 
 async def setup(bot):
     await bot.add_cog(MilitaryDocuments(bot))
