@@ -1,48 +1,49 @@
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
-import os
 import asyncio
+import os
 
-# Load environment variables from .env
-load_dotenv()
+# You can set your token here directly if fps.ms keeps it secure
+TOKEN = "NOT HERE_HEHEHEHEHEHEHE"  # <- Replace with your real token
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-if not TOKEN:
-    raise ValueError("DISCORD_TOKEN environment variable not found. Please set it in your .env file.")
-
+# Set up intents
 intents = discord.Intents.default()
-intents.message_content = True  # Enable if your bot needs to read message content
+intents.guilds = True
+intents.messages = True
+intents.message_content = True
+intents.members = True
 
-bot = commands.Bot(command_prefix="/", intents=intents)
+# Both slash (application) and prefix command support
+bot = commands.Bot(command_prefix="!", intents=intents)
 
-# List all your cog extensions here
-COGS = [
-    "cogs.military_resources",
-    "cogs.military_documents",
-    "cogs.personnel_db",
-    "cogs.help_cog"
-]
+bot.remove_command("help")
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
-    print("------")
-    # Sync all slash commands globally (can be adjusted per guild for faster updates)
-    await bot.tree.sync()
-    print("Slash commands synced.")
+    print(f"✅ Logged in as {bot.user} (ID: {bot.user.id})")
+    print("🔁 Syncing slash commands...")
+    synced = await bot.tree.sync()
+    print(f"✅ Synced {len(synced)} global slash commands.")
+    print("🟢 Bot is ready.")
 
-async def load_all_cogs():
-    for cog in COGS:
+async def load_extensions():
+    extensions = [
+        "cogs.help_cog",
+        "cogs.military_documents",
+        "cogs.military_resources",
+        "cogs.personnel_units",
+        "cogs.resource_assignment",
+    ]
+    for ext in extensions:
         try:
-            await bot.load_extension(cog)
-            print(f"Loaded cog: {cog}")
+            await bot.load_extension(ext)
+            print(f"✅ Loaded extension: {ext}")
         except Exception as e:
-            print(f"Failed to load cog {cog}: {e}")
+            print(f"❌ Failed to load extension {ext}: {e}")
 
 async def main():
     async with bot:
-        await load_all_cogs()
+        await load_extensions()
         await bot.start(TOKEN)
 
 if __name__ == "__main__":
