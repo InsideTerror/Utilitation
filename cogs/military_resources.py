@@ -1,73 +1,65 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
-import os
-from utils.permissions import is_authorized
-
-DATA_PATH = "data/resources.json"
-RESOURCE_TYPES = ["ammo", "rations", "fuel", "medkits", "vehicles"]
-
-def load_data():
-    if not os.path.exists(DATA_PATH):
-        return {}
-    with open(DATA_PATH, "r") as f:
-        return json.load(f)
-
-def save_data(data):
-    with open(DATA_PATH, "w") as f:
-        json.dump(data, f, indent=4)
+from utils.permissions import is_authorized_prefix, is_authorized_slash
 
 class MilitaryResources(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.data = load_data()
+        self.resources = {}  # {name: quantity}
 
-    def save(self):
-        save_data(self.data)
+    # Add Resource
+    @commands.command(name="add_resource")
+    @is_authorized_prefix()
+    async def add_resource_cmd(self, ctx, name: str, quantity: int):
+        self.resources[name] = self.resources.get(name, 0) + quantity
+        await ctx.send(f"Added {quantity} of {name}. New total: {self.resources[name]}")
 
-    @app_commands.command(name="resources_view", description="View current resource levels for a unit.")
-    async def view_resources(self, interaction: discord.Interaction, unit: str):
-        unit_data = self.data.get(unit.lower())
-        if not unit_data:
-            await interaction.response.send_message(f"No data found for unit `{unit}`.", ephemeral=True)
+    @app_commands.command(name="addresource", description="Add military resource")
+    async def add_resource_slash(self, interaction: discord.Interaction, name: str, quantity: int):
+        if not await is_authorized_slash(interaction.user):
+            await interaction.response.send_message("You are not authorized.", ephemeral=True)
             return
-        embed = discord.Embed(title=f"Resources for {unit}", color=discord.Color.dark_green())
-        for rtype in RESOURCE_TYPES:
-            embed.add_field(name=rtype.capitalize(), value=str(unit_data.get(rtype, 0)), inline=True)
-        await interaction.response.send_message(embed=embed)
+        self.resources[name] = self.resources.get(name, 0) + quantity
+        await interaction.response.send_message(f"Added {quantity} of {name}. New total: {self.resources[name]}")
 
-    @app_commands.command(name="resources_allocate", description="Allocate resources to a unit.")
-    async def allocate_resources(self, interaction: discord.Interaction, unit: str, resource: str, amount: int):
-        if not await is_authorized(interaction.user, ["Commander", "Quartermaster"]):
-            await interaction.response.send_message("You are not authorized to allocate resources.", ephemeral=True)
+    # Remove Resource
+    @commands.command(name="remove_resource")
+    @is_authorized_prefix()
+    async def remove_resource_cmd(self, ctx, name: str, quantity: int):
+        if name not in self.resources:
+            await ctx.send("Resource not found.")
             return
-        resource = resource.lower()
-        if resource not in RESOURCE_TYPES:
-            await interaction.response.send_message("Invalid resource type.", ephemeral=True)
-            return
-        unit_data = self.data.setdefault(unit.lower(), {})
-        unit_data[resource] = unit_data.get(resource, 0) + amount
-        self.save()
-        await interaction.response.send_message(f"Allocated {amount} {resource} to {unit}.")
+        self.resources[name] = max(0, self.resources[name] - quantity)
+        await ctx.send(f"Removed {quantity} of {name}. Remaining: {self.resources[name]}")
 
-    @app_commands.command(name="resources_consume", description="Consume resources for an operation.")
-    async def consume_resources(self, interaction: discord.Interaction, unit: str, resource: str, amount: int, operation: str):
-        if not await is_authorized(interaction.user, ["Commander", "Quartermaster"]):
-            await interaction.response.send_message("You are not authorized to consume resources.", ephemeral=True)
+    @app_commands.command(name="removeresource", description="Remove military resource")
+    async def remove_resource_slash(self, interaction: discord.Interaction, name: str, quantity: int):
+        if not await is_authorized_slash(interaction.user):
+            await interaction.response.send_message("You are not authorized.", ephemeral=True)
             return
-        resource = resource.lower()
-        if resource not in RESOURCE_TYPES:
-            await interaction.response.send_message("Invalid resource type.", ephemeral=True)
+        if name not in self.resources:
+            await interaction.response.send_message("Resource not found.", ephemeral=True)
             return
-        unit_data = self.data.setdefault(unit.lower(), {})
-        current = unit_data.get(resource, 0)
-        if current < amount:
-            await interaction.response.send_message(f"Not enough {resource} in stock. Only {current} available.", ephemeral=True)
+        self.resources[name] = max(0, self.resources[name] - quantity)
+        await interaction.response.send_message(f"Removed {quantity} of {name}. Remaining: {self.resources[name]}")
+
+    # View Resources
+    @commands.command(name="view_resources")
+    async def view_resources_cmd(self, ctx):
+        if not self.resources:
+            await ctx.send("No resources.")
             return
-        unit_data[resource] = current - amount
-        self.save()
-        await interaction.response.send_message(f"Consumed {amount} {resource} from {unit} for {operation}.")
+        msg = "\n".join([f"{k}: {v}" for k, v in self.resources.items()])
+        await ctx.send(f"Resources:\n{msg}")
+
+    @app_commands.command(name="viewresources", description="View all military resources")
+    async def view_resources_slash(self, interaction: discord.Interaction):
+        if not self.resources:
+            await interaction.response.send_message("No resources.")
+            return
+        msg = "\n".join([f"{k}: {v}" for k, v in self.resources.items()])
+        await interaction.response.send_message(f"Resources:\n{msg}")
 
 async def setup(bot):
     await bot.add_cog(MilitaryResources(bot))
