@@ -14,6 +14,7 @@ After the upload, the user has to type the command "!importjson REPLACETHISWITHL
 ✅ Created channel: YOURCHANNELHERE
 
 ✅ Created category: YOURCATEGORYHERE
+
 --------------------------------------------------------------------------------------------------------------------------------------
 
 
