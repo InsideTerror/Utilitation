@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discord Server Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; }
+    input, select, button, textarea { display: block; margin: 0.5rem 0; padding: 0.5rem; width: 100%; }
+    .section { border: 1px solid #ccc; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Discord Server Generator</h1>
+
+  <div class="section">
+    <h2>Add Role</h2>
+    <input type="text" id="roleName" placeholder="Role Name" />
+    <label>Role Color</label>
+    <input type="color" id="roleColor" />
+    <label>Permissions</label>
+    <select id="rolePermissions" multiple>
+      <option value="administrator">Administrator</option>
+      <option value="manage_guild">Manage Server</option>
+      <option value="manage_roles">Manage Roles</option>
+      <option value="manage_channels">Manage Channels</option>
+      <option value="kick_members">Kick Members</option>
+      <option value="ban_members">Ban Members</option>
+      <option value="view_audit_log">View Audit Log</option>
+      <option value="send_messages">Send Messages</option>
+      <option value="manage_messages">Manage Messages</option>
+      <option value="read_message_history">Read Message History</option>
+      <option value="mention_everyone">Mention Everyone</option>
+      <option value="connect">Connect to Voice</option>
+      <option value="speak">Speak in Voice</option>
+    </select>
+    <button onclick="addRole()">Add Role</button>
+  </div>
+
+  <div class="section">
+    <h2>Add Category & Channels</h2>
+    <input type="text" id="categoryName" placeholder="Category Name" />
+    <textarea id="channelsList" placeholder="Channel names, one per line. Prefix with 'text:' or 'voice:'"></textarea>
+    <button onclick="addCategory()">Add Category</button>
+  </div>
+
+  <div class="section">
+    <h2>Generated JSON</h2>
+    <textarea id="outputJson" rows="15"></textarea>
+    <button onclick="downloadJson()">Download JSON</button>
+  </div>
+
+  <script>
+    let serverLayout = { roles: [], categories: [] };
+
+    function addRole() {
+      const name = document.getElementById("roleName").value;
+      const color = document.getElementById("roleColor").value;
+      const permissions = Array.from(document.getElementById("rolePermissions").selectedOptions).map(opt => opt.value);
+      if (name) {
+        serverLayout.roles.push({ name, color, permissions });
+        updateOutput();
+        alert("✅ Role added!");
+      }
+    }
+
+    function addCategory() {
+      const name = document.getElementById("categoryName").value;
+      const channelsRaw = document.getElementById("channelsList").value.trim().split("\n");
+      const channels = channelsRaw.map(line => {
+        let [type, ...rest] = line.trim().split(":");
+        return { name: rest.join(":").trim(), type: type.trim().toLowerCase() };
+      });
+      if (name && channels.length) {
+        serverLayout.categories.push({ name, channels });
+        updateOutput();
+        alert("📂 Category added!");
+      }
+    }
+
+    function updateOutput() {
+      document.getElementById("outputJson").value = JSON.stringify(serverLayout, null, 2);
+    }
+
+    function downloadJson() {
+      const blob = new Blob([JSON.stringify(serverLayout, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "server_layout.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
+<!---Made by Fritz Teufel and ChatGPT--->
