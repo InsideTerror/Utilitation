@@ -1,10 +1,10 @@
-#Utilitation
+Utilitation
 How to use Utilitation bot.
 --------------------------------------------------------------------------------------------------------------------------------------
 
 The purpose of the bot: To automate/simplify the creation of roles, channels, and categories in discord.
 --------------------------------------------------------------------------------------------------------------------------------------
-The website (provided along the bot and at ) will generate a .JSON file, which the user the has to upload to **filegarden.com**
+The website (provided along the bot and at https://insideterror.github.io/Utilitation/) will generate a .JSON file, which the user the has to upload to **filegarden.com**
 After the upload, the user has to type the command "!importjson REPLACETHISWITHLINK" and the bot will (hopefully) reply:
 
 📥 Downloading structure file...
