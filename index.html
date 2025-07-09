@@ -22,6 +22,13 @@
             color: white;
             display: inline-block;
         }
+        pre {
+            background: #eee;
+            padding: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
@@ -58,7 +65,8 @@
     <h2>Reset Generator</h2>
     <button onclick="resetGenerator()">Reset All</button>
 
-
+    <h2>Generated JSON Output</h2>
+    <pre id="output"></pre>
 
     <script>
         const rolesDiv = document.getElementById('roles');
@@ -161,6 +169,7 @@
                 categoriesDiv.innerHTML = '';
                 if (data.roles) data.roles.forEach(addRole);
                 if (data.categories) data.categories.forEach(addCategory);
+                document.getElementById('output').textContent = JSON.stringify(data, null, 2);
             };
             reader.readAsText(file);
         }
