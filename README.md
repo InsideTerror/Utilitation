@@ -8,8 +8,11 @@ The website (provided along the bot and at ) will generate a .JSON file, which t
 After the upload, the user has to type the command "!importjson REPLACETHISWITHLINK" and the bot will (hopefully) reply:
 
 📥 Downloading structure file...
+
 ✅ Created role: YOURROLEHERE
+
 ✅ Created channel: YOURCHANNELHERE
+
 ✅ Created category: YOURCATEGORYHERE
 --------------------------------------------------------------------------------------------------------------------------------------
 
