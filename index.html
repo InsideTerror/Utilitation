@@ -54,6 +54,9 @@
     <button onclick="exportJSON()">Export JSON</button>
     <button onclick="importJSON()">Import JSON</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" onchange="handleImport(event)">
+    <h3>Generated JSON Preview</h3>
+<pre id="jsonOutput" style="background:#f5f5f5;padding:1em;border-radius:8px;max-height:300px;overflow:auto;"></pre>
+
 
     <h2>Reset Generator</h2>
     <button onclick="resetGenerator()">Reset All</button>
